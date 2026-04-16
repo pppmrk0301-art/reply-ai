@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReplyAI</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    .container {
+      max-width: 950px;
+      margin: 40px auto;
+      padding: 24px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 36px;
+    }
+
+    .subtitle {
+      color: #9ca3af;
+      margin-bottom: 24px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      border-radius: 12px;
+      border: 1px solid #374151;
+      background: #0b1220;
+      color: white;
+      padding: 14px;
+      font-size: 16px;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #60a5fa;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+      margin-bottom: 18px;
+    }
+
+    .control-box {
+      background: #0b1220;
+      border: 1px solid #273244;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .control-box label {
+      display: block;
+      font-size: 14px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+
+    select {
+      width: 100%;
+      background: #111827;
+      color: white;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .secondary {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+
+    .top-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .results {
+      margin-top: 28px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .result-card {
+      background: #0b1220;
+      border: 1px solid #273244;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .result-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .result-card p {
+      white-space: pre-wrap;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .copy-btn {
+      background: #374151;
+      color: white;
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    .status {
+      margin-top: 16px;
+      color: #93c5fd;
+      min-height: 20px;
+    }
+
+    @media (max-width: 700px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>ReplyAI</h1>
+      <div class="subtitle">Colle un message et génère 3 réponses prêtes à envoyer.</div>
+
+      <textarea id="msg" placeholder="Exemple : Bonjour, je n’ai toujours pas reçu mon colis et personne ne répond..."></textarea>
+
+      <div class="controls">
+        <div class="control-box">
+          <label for="language">Langue</label>
+          <select id="language">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+
+        <div class="control-box">
+          <label for="tone">Ton global</label>
+          <select id="tone">
+            <option value="default">Équilibré</option>
+            <option value="polite">Poli</option>
+            <option value="direct">Direct</option>
+            <option value="warm">Chaleureux</option>
+          </select>
+        </div>
+
+        <div class="control-box">
+          <label for="length">Longueur</label>
+          <select id="length">
+            <option value="short">Courte</option>
+            <option value="medium" selected>Moyenne</option>
+            <option value="long">Longue</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" onclick="send()">Generate Replies</button>
+        <button class="secondary" onclick="pasteText()">Coller depuis presse-papiers</button>
+        <button class="secondary" onclick="clearAll()">Effacer</button>
+      </div>
+
+      <div class="top-actions">
+        <button class="secondary" onclick="copyAll()">Copier les 3 réponses</button>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div class="results" id="results" style="display:none;">
+        <div class="result-card">
+          <h3>Professional</h3>
+          <p id="professional"></p>
+          <button class="copy-btn" onclick="copyText('professional')">Copier</button>
+        </div>
+
+        <div class="result-card">
+          <h3>Friendly</h3>
+          <p id="friendly"></p>
+          <button class="copy-btn" onclick="copyText('friendly')">Copier</button>
+        </div>
+
+        <div class="result-card">
+          <h3>Firm</h3>
+          <p id="firm"></p>
+          <button class="copy-btn" onclick="copyText('firm')">Copier</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function send() {
+      const message = document.getElementById("msg").value.trim();
+      const language = document.getElementById("language").value;
+      const tone = document.getElementById("tone").value;
+      const length = document.getElementById("length").value;
+      const status = document.getElementById("status");
+      const results = document.getElementById("results");
+
+      if (!message) {
+        status.innerText = "Écris ou colle un message d’abord.";
+        return;
+      }
+
+      status.innerText = "Génération en cours...";
+      results.style.display = "none";
+
+      try {
+        const res = await fetch("http://localhost:3000/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            language,
+            tone,
+            length
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          status.innerText = "Erreur : " + (data.error?.message || JSON.stringify(data));
+          return;
+        }
+
+        fillCards(data.text || "");
+        results.style.display = "grid";
+        status.innerText = "Réponses générées.";
+      } catch (error) {
+        status.innerText = "Erreur de connexion au serveur.";
+      }
+    }
+
+    function fillCards(text) {
+      const professionalMatch = text.match(/Professional:\s*([\s\S]*?)(?=Friendly:|$)/i);
+      const friendlyMatch = text.match(/Friendly:\s*([\s\S]*?)(?=Firm:|$)/i);
+      const firmMatch = text.match(/Firm:\s*([\s\S]*)/i);
+
+      document.getElementById("professional").innerText = professionalMatch ? professionalMatch[1].trim() : "Non trouvé";
+      document.getElementById("friendly").innerText = friendlyMatch ? friendlyMatch[1].trim() : "Non trouvé";
+      document.getElementById("firm").innerText = firmMatch ? firmMatch[1].trim() : "Non trouvé";
+    }
+
+    async function pasteText() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById("msg").value = text;
+        document.getElementById("status").innerText = "Texte collé.";
+      } catch (e) {
+        document.getElementById("status").innerText = "Impossible de lire le presse-papiers.";
+      }
+    }
+
+    function clearAll() {
+      document.getElementById("msg").value = "";
+      document.getElementById("professional").innerText = "";
+      document.getElementById("friendly").innerText = "";
+      document.getElementById("firm").innerText = "";
+      document.getElementById("results").style.display = "none";
+      document.getElementById("status").innerText = "";
+    }
+
+    async function copyText(id) {
+      const text = document.getElementById(id).innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        document.getElementById("status").innerText = "Copié.";
+      } catch (e) {
+        document.getElementById("status").innerText = "Impossible de copier.";
+      }
+    }
+
+    async function copyAll() {
+      const allText =
+`Professional:
+${document.getElementById("professional").innerText}
+
+Friendly:
+${document.getElementById("friendly").innerText}
+
+Firm:
+${document.getElementById("firm").innerText}`;
+
+      try {
+        await navigator.clipboard.writeText(allText);
+        document.getElementById("status").innerText = "Les 3 réponses ont été copiées.";
+      } catch (e) {
+        document.getElementById("status").innerText = "Impossible de copier.";
+      }
+    }
+  </script>
+</body>
+</html>
