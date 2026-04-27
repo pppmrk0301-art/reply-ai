@@ -24,9 +24,9 @@
       box-shadow: 0 0 25px rgba(0,0,0,0.35);
     }
 
-    h2 {
+    h1 {
       margin-top: 0;
-      margin-bottom: 6px;
+      font-size: 22px;
     }
 
     .subtitle {
@@ -37,14 +37,13 @@
 
     textarea {
       width: 100%;
-      height: 125px;
+      height: 120px;
       border-radius: 10px;
       border: none;
       padding: 12px;
       margin-bottom: 15px;
       resize: none;
       font-size: 14px;
-      box-sizing: border-box;
     }
 
     .templates {
@@ -56,16 +55,12 @@
 
     .templates button {
       background: #334155;
-      color: white;
       border: none;
-      padding: 8px 11px;
+      padding: 7px 10px;
       border-radius: 8px;
       cursor: pointer;
       font-size: 12px;
-    }
-
-    .templates button:hover {
-      background: #475569;
+      color: white;
     }
 
     .row {
@@ -76,7 +71,7 @@
 
     select {
       flex: 1;
-      padding: 9px;
+      padding: 8px;
       border-radius: 8px;
       border: none;
     }
@@ -88,12 +83,8 @@
       border-radius: 10px;
       color: white;
       cursor: pointer;
-      font-weight: bold;
       width: 100%;
-    }
-
-    .main-btn:hover {
-      background: #2563eb;
+      font-weight: bold;
     }
 
     .output {
@@ -103,7 +94,6 @@
       border-radius: 10px;
       white-space: pre-line;
       min-height: 70px;
-      line-height: 1.45;
     }
 
     .copy-btn {
@@ -117,15 +107,19 @@
       font-weight: bold;
     }
 
-    .copy-btn:hover {
-      background: #16a34a;
+    .pro-btn {
+      margin-top: 12px;
+      background: #f59e0b;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: bold;
     }
 
-    .small-note {
-      margin-top: 12px;
-      font-size: 11px;
-      opacity: 0.55;
-      text-align: center;
+    .pro-btn:hover {
+      background: #d97706;
     }
   </style>
 </head>
@@ -134,194 +128,74 @@
 
 <div class="container">
 
-  <h2>SellerReply AI</h2>
-  <div class="subtitle" id="subtitle">
-    Réponses instantanées pour Vinted, Leboncoin, Shopify et petits vendeurs.
+  <h1>Stop wasting hours answering buyers.</h1>
+
+  <div class="subtitle">
+    Copy → click → send. Answer any Vinted / Leboncoin message instantly.
   </div>
 
-  <textarea id="message" placeholder="Colle ici le message du client..."></textarea>
+  <textarea id="message" placeholder="Paste buyer message here..."></textarea>
 
   <div class="templates">
-    <button id="deliveryBtn" onclick="setTemplate('delivery')">📦 Retard livraison</button>
-    <button id="refundBtn" onclick="setTemplate('refund')">💸 Remboursement</button>
-    <button id="priceBtn" onclick="setTemplate('price')">💰 Négociation prix</button>
-    <button id="availableBtn" onclick="setTemplate('available')">❓ Toujours dispo ?</button>
-    <button id="refuseBtn" onclick="setTemplate('refuse')">🚫 Refus poli</button>
+    <button onclick="setTemplate('delivery')">📦 Delivery delay</button>
+    <button onclick="setTemplate('refund')">💸 Refund</button>
+    <button onclick="setTemplate('price')">💰 Price negotiation</button>
+    <button onclick="setTemplate('available')">❓ Still available?</button>
+    <button onclick="setTemplate('refuse')">🚫 Refuse offer</button>
   </div>
 
   <div class="row">
-    <select id="language" onchange="updateUI()">
-      <option value="fr">Français</option>
-      <option value="en">English</option>
+    <select id="tone">
+      <option value="balanced">Balanced</option>
+      <option value="friendly">Friendly</option>
+      <option value="formal">Professional</option>
+      <option value="firm">Firm</option>
     </select>
 
-    <select id="tone"></select>
-
-    <select id="length"></select>
+    <select id="length">
+      <option value="short">Short</option>
+      <option value="medium">Medium</option>
+      <option value="long">Long</option>
+    </select>
   </div>
 
-  <button class="main-btn" id="generateBtn" onclick="generate()">Générer réponse</button>
+  <button class="main-btn" onclick="generate()">Generate reply</button>
 
-  <div class="output" id="output">Ta réponse apparaîtra ici.</div>
+  <div class="output" id="output"></div>
 
-  <button class="copy-btn" id="copyBtn" onclick="copyText()">📋 Copier la réponse</button>
+  <button class="copy-btn" onclick="copyText()">Copy reply</button>
 
-  <div class="small-note" id="note">
-    Astuce : clique sur un modèle pour générer une réponse immédiatement.
-  </div>
+  <!-- 🔥 PRO BUTTON -->
+  <button class="pro-btn" onclick="unlockPro()">🔥 Unlock PRO</button>
 
 </div>
 
 <script>
-const uiText = {
-  fr: {
-    subtitle: "Réponses instantanées pour Vinted, Leboncoin, Shopify et petits vendeurs.",
-    placeholder: "Colle ici le message du client...",
-    generate: "Générer réponse",
-    copy: "📋 Copier la réponse",
-    outputDefault: "Ta réponse apparaîtra ici.",
-    loading: "⏳ Génération en cours...",
-    note: "Astuce : clique sur un modèle pour générer une réponse immédiatement.",
-    emptyAlert: "Écris ou colle un message d’abord.",
-    copiedAlert: "Réponse copiée !",
-    noCopyAlert: "Aucune réponse à copier.",
-    error: "Erreur de connexion au serveur.",
-    tones: [
-      ["balanced", "Équilibré"],
-      ["friendly", "Amical"],
-      ["formal", "Professionnel"],
-      ["firm", "Ferme"]
-    ],
-    lengths: [
-      ["short", "Court"],
-      ["medium", "Moyen"],
-      ["long", "Long"]
-    ],
-    buttons: {
-      delivery: "📦 Retard livraison",
-      refund: "💸 Remboursement",
-      price: "💰 Négociation prix",
-      available: "❓ Toujours dispo ?",
-      refuse: "🚫 Refus poli"
-    },
-    templates: {
-      delivery: "Bonjour, je n’ai toujours pas reçu ma commande. Pouvez-vous vérifier où en est la livraison ?",
-      refund: "Bonjour, je souhaite demander un remboursement. Pouvez-vous m’indiquer la procédure à suivre ?",
-      price: "Bonjour, est-ce que vous accepteriez un prix plus bas pour cet article ?",
-      available: "Bonjour, l’article est-il toujours disponible ?",
-      refuse: "Bonjour, merci pour votre proposition, mais je ne peux pas accepter cette offre."
-    }
-  },
-
-  en: {
-    subtitle: "Instant replies for Vinted, Leboncoin, Shopify and small online sellers.",
-    placeholder: "Paste the customer's message here...",
-    generate: "Generate Reply",
-    copy: "📋 Copy Reply",
-    outputDefault: "Your reply will appear here.",
-    loading: "⏳ Generating reply...",
-    note: "Tip: click a template to generate a reply instantly.",
-    emptyAlert: "Write or paste a message first.",
-    copiedAlert: "Reply copied!",
-    noCopyAlert: "No reply to copy.",
-    error: "Server connection error.",
-    tones: [
-      ["balanced", "Balanced"],
-      ["friendly", "Friendly"],
-      ["formal", "Professional"],
-      ["firm", "Firm"]
-    ],
-    lengths: [
-      ["short", "Short"],
-      ["medium", "Medium"],
-      ["long", "Long"]
-    ],
-    buttons: {
-      delivery: "📦 Delivery delay",
-      refund: "💸 Refund request",
-      price: "💰 Price negotiation",
-      available: "❓ Still available?",
-      refuse: "🚫 Polite refusal"
-    },
-    templates: {
-      delivery: "Hi, I still haven’t received my order. Could you please check the delivery status?",
-      refund: "Hi, I would like to request a refund. Could you please tell me what the process is?",
-      price: "Hi, would you accept a lower price for this item?",
-      available: "Hi, is this item still available?",
-      refuse: "Hi, thank you for your offer, but I can’t accept it."
-    }
-  }
-};
-
-function updateSelect(selectId, options) {
-  const select = document.getElementById(selectId);
-  const currentValue = select.value;
-
-  select.innerHTML = "";
-
-  options.forEach(([value, label]) => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    select.appendChild(option);
-  });
-
-  if (currentValue) {
-    select.value = currentValue;
-  }
-}
-
-function updateUI() {
-  const language = document.getElementById("language").value;
-  const t = uiText[language];
-
-  document.documentElement.lang = language;
-  document.getElementById("subtitle").innerText = t.subtitle;
-  document.getElementById("message").placeholder = t.placeholder;
-  document.getElementById("generateBtn").innerText = t.generate;
-  document.getElementById("copyBtn").innerText = t.copy;
-  document.getElementById("note").innerText = t.note;
-
-  document.getElementById("deliveryBtn").innerText = t.buttons.delivery;
-  document.getElementById("refundBtn").innerText = t.buttons.refund;
-  document.getElementById("priceBtn").innerText = t.buttons.price;
-  document.getElementById("availableBtn").innerText = t.buttons.available;
-  document.getElementById("refuseBtn").innerText = t.buttons.refuse;
-
-  updateSelect("tone", t.tones);
-  updateSelect("length", t.lengths);
-
-  const output = document.getElementById("output");
-  if (
-    output.innerText === uiText.fr.outputDefault ||
-    output.innerText === uiText.en.outputDefault
-  ) {
-    output.innerText = t.outputDefault;
-  }
-}
 
 function setTemplate(type) {
-  const language = document.getElementById("language").value;
-  const template = uiText[language].templates[type];
+  const templates = {
+    delivery: "Hi, I haven’t received my order yet. Can you check the delivery?",
+    refund: "Hi, I would like a refund. What is the process?",
+    price: "Hi, would you accept a lower price?",
+    available: "Hi, is this item still available?",
+    refuse: "Hi, I can’t accept that offer, thank you."
+  };
 
-  document.getElementById("message").value = template;
+  document.getElementById("message").value = templates[type];
   generate();
 }
 
 async function generate() {
-  const language = document.getElementById("language").value;
-  const t = uiText[language];
-
-  const message = document.getElementById("message").value.trim();
+  const message = document.getElementById("message").value;
   const tone = document.getElementById("tone").value;
   const length = document.getElementById("length").value;
 
   if (!message) {
-    alert(t.emptyAlert);
+    alert("Write a message first");
     return;
   }
 
-  document.getElementById("output").innerText = t.loading;
+  document.getElementById("output").innerText = "⏳ Generating...";
 
   try {
     const res = await fetch("/api/generate", {
@@ -331,7 +205,7 @@ async function generate() {
       },
       body: JSON.stringify({
         message,
-        language,
+        language: "en",
         tone,
         length
       })
@@ -339,34 +213,24 @@ async function generate() {
 
     const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.error || "API error");
-    }
-
     document.getElementById("output").innerText = data.text;
 
-  } catch (err) {
-    document.getElementById("output").innerText = t.error;
-    console.error(err);
+  } catch {
+    document.getElementById("output").innerText =
+      "Server error.";
   }
 }
 
 function copyText() {
-  const language = document.getElementById("language").value;
-  const t = uiText[language];
-
   const text = document.getElementById("output").innerText;
-
-  if (!text || text === uiText.fr.outputDefault || text === uiText.en.outputDefault || text === t.loading) {
-    alert(t.noCopyAlert);
-    return;
-  }
-
   navigator.clipboard.writeText(text);
-  alert(t.copiedAlert);
+  alert("Copied!");
 }
 
-updateUI();
+function unlockPro() {
+  alert("Want unlimited replies?\n\nDM me on Instagram: @yourusername");
+}
+
 </script>
 
 </body>
