@@ -12,31 +12,39 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
     }
 
     .container {
       background: #1e293b;
       padding: 25px;
-      border-radius: 12px;
-      width: 520px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      border-radius: 14px;
+      width: 540px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.35);
     }
 
     h2 {
       margin-top: 0;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.75;
+      margin-bottom: 18px;
     }
 
     textarea {
       width: 100%;
-      height: 120px;
-      border-radius: 8px;
+      height: 125px;
+      border-radius: 10px;
       border: none;
-      padding: 10px;
+      padding: 12px;
       margin-bottom: 15px;
       resize: none;
       font-size: 14px;
+      box-sizing: border-box;
     }
 
     .templates {
@@ -48,9 +56,10 @@
 
     .templates button {
       background: #334155;
+      color: white;
       border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
+      padding: 8px 11px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 12px;
     }
@@ -67,16 +76,16 @@
 
     select {
       flex: 1;
-      padding: 8px;
-      border-radius: 6px;
+      padding: 9px;
+      border-radius: 8px;
       border: none;
     }
 
     .main-btn {
       background: #3b82f6;
       border: none;
-      padding: 10px;
-      border-radius: 8px;
+      padding: 12px;
+      border-radius: 10px;
       color: white;
       cursor: pointer;
       font-weight: bold;
@@ -91,16 +100,18 @@
       margin-top: 15px;
       background: #020617;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: 10px;
       white-space: pre-line;
+      min-height: 70px;
+      line-height: 1.45;
     }
 
     .copy-btn {
       margin-top: 10px;
       background: #22c55e;
       border: none;
-      padding: 8px;
-      border-radius: 6px;
+      padding: 10px;
+      border-radius: 8px;
       cursor: pointer;
       width: 100%;
       font-weight: bold;
@@ -108,6 +119,13 @@
 
     .copy-btn:hover {
       background: #16a34a;
+    }
+
+    .small-note {
+      margin-top: 12px;
+      font-size: 11px;
+      opacity: 0.55;
+      text-align: center;
     }
   </style>
 </head>
@@ -117,13 +135,12 @@
 <div class="container">
 
   <h2>SellerReply AI</h2>
-  <p style="font-size:12px;opacity:0.7;">
-    Réponds instantanément aux clients (Vinted, Leboncoin, Shopify…)
-  </p>
+  <div class="subtitle">
+    Réponses instantanées pour Vinted, Leboncoin, Shopify et petits vendeurs.
+  </div>
 
   <textarea id="message" placeholder="Colle ici le message du client..."></textarea>
 
-  <!-- 🔥 TEMPLATES -->
   <div class="templates">
     <button onclick="setTemplate('delivery')">📦 Retard livraison</button>
     <button onclick="setTemplate('refund')">💸 Remboursement</button>
@@ -154,39 +171,42 @@
 
   <button class="main-btn" onclick="generate()">Générer réponse</button>
 
-  <div class="output" id="output"></div>
+  <div class="output" id="output">Ta réponse apparaîtra ici.</div>
 
   <button class="copy-btn" onclick="copyText()">📋 Copier la réponse</button>
+
+  <div class="small-note">
+    Astuce : clique sur un modèle pour générer une réponse immédiatement.
+  </div>
 
 </div>
 
 <script>
-
 function setTemplate(type) {
   const templates = {
-    delivery: "Bonjour, je n’ai toujours pas reçu ma commande, pouvez-vous vérifier ?",
-    refund: "Bonjour, je souhaite un remboursement, merci de m’indiquer la procédure.",
-    price: "Bonjour, est-ce que vous acceptez un prix plus bas ?",
+    delivery: "Bonjour, je n’ai toujours pas reçu ma commande. Pouvez-vous vérifier où en est la livraison ?",
+    refund: "Bonjour, je souhaite demander un remboursement. Pouvez-vous m’indiquer la procédure à suivre ?",
+    price: "Bonjour, est-ce que vous accepteriez un prix plus bas pour cet article ?",
     available: "Bonjour, l’article est-il toujours disponible ?",
-    refuse: "Bonjour, je ne peux pas accepter cette offre, merci de votre compréhension."
+    refuse: "Bonjour, merci pour votre proposition, mais je ne peux pas accepter cette offre."
   };
 
   document.getElementById("message").value = templates[type];
-generate();
+  generate();
 }
 
 async function generate() {
-  const message = document.getElementById("message").value;
+  const message = document.getElementById("message").value.trim();
   const language = document.getElementById("language").value;
   const tone = document.getElementById("tone").value;
   const length = document.getElementById("length").value;
 
   if (!message) {
-    alert("Écris quelque chose");
+    alert("Écris ou colle un message d’abord.");
     return;
   }
 
-  document.getElementById("output").innerText = "Chargement...";
+  document.getElementById("output").innerText = "⏳ Génération en cours...";
 
   try {
     const res = await fetch("/api/generate", {
@@ -219,10 +239,15 @@ async function generate() {
 
 function copyText() {
   const text = document.getElementById("output").innerText;
-  navigator.clipboard.writeText(text);
-  alert("Copié !");
-}
 
+  if (!text || text === "Ta réponse apparaîtra ici." || text === "⏳ Génération en cours...") {
+    alert("Aucune réponse à copier.");
+    return;
+  }
+
+  navigator.clipboard.writeText(text);
+  alert("Réponse copiée !");
+}
 </script>
 
 </body>
