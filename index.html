@@ -12,92 +12,142 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
 
     .container {
       background: #1e293b;
-      padding: 20px;
+      padding: 25px;
       border-radius: 12px;
       width: 500px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
     }
 
     textarea {
       width: 100%;
-      height: 100px;
-      margin-bottom: 10px;
+      height: 120px;
       border-radius: 8px;
+      border: none;
       padding: 10px;
+      margin-bottom: 15px;
+      resize: none;
+      font-size: 14px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    select {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
     }
 
     button {
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
       background: #3b82f6;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
       color: white;
       cursor: pointer;
-      margin-right: 5px;
+      font-weight: bold;
     }
 
-    .result {
+    button:hover {
+      background: #2563eb;
+    }
+
+    .output {
       margin-top: 15px;
-      white-space: pre-line;
       background: #020617;
-      padding: 10px;
+      padding: 15px;
       border-radius: 8px;
+      white-space: pre-line;
+    }
+
+    h2 {
+      margin-top: 0;
     }
   </style>
 </head>
+
 <body>
+  <div class="container">
+    <h2>ReplyAI</h2>
 
-<div class="container">
-  <h2>ReplyAI</h2>
+    <textarea id="message" placeholder="Colle ton message ici..."></textarea>
 
-  <textarea id="inputText" placeholder="Colle ton message ici..."></textarea>
+    <div class="row">
+      <select id="language">
+        <option value="fr">Français</option>
+        <option value="en">English</option>
+      </select>
 
-  <button onclick="generate()">Generate Replies</button>
+      <select id="tone">
+        <option value="balanced">Équilibré</option>
+        <option value="friendly">Amical</option>
+        <option value="formal">Professionnel</option>
+        <option value="firm">Ferme</option>
+      </select>
 
-  <div class="result" id="output"></div>
-</div>
+      <select id="length">
+        <option value="short">Court</option>
+        <option value="medium">Moyen</option>
+        <option value="long">Long</option>
+      </select>
+    </div>
 
-<script>
-async function generate() {
-  const message = document.getElementById("inputText").value;
+    <button onclick="generate()">Generate Replies</button>
 
-  if (!message) {
-    alert("Écris quelque chose");
-    return;
-  }
+    <div class="output" id="output"></div>
+  </div>
 
-  try {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: message,
-        language: "fr",
-        tone: "balanced",
-        length: "medium"
-      })
-    });
+  <script>
+    async function generate() {
+      const message = document.getElementById("message").value;
+      const language = document.getElementById("language").value;
+      const tone = document.getElementById("tone").value;
+      const length = document.getElementById("length").value;
 
-    const data = await res.json();
+      if (!message) {
+        alert("Écris quelque chose");
+        return;
+      }
 
-    if (!res.ok) {
-      throw new Error(data.error || "Erreur serveur");
+      document.getElementById("output").innerText = "Chargement...";
+
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message,
+            language,
+            tone,
+            length
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Erreur API");
+        }
+
+        document.getElementById("output").innerText = data.text;
+
+      } catch (err) {
+        document.getElementById("output").innerText =
+          "Erreur de connexion au serveur.";
+        console.error(err);
+      }
     }
-
-    document.getElementById("output").innerText = data.text;
-
-  } catch (err) {
-    document.getElementById("output").innerText =
-      "Erreur de connexion au serveur.";
-    console.error(err);
-  }
-}
-</script>
-
+  </script>
 </body>
 </html>
