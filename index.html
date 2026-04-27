@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>SellerReply AI</title>
@@ -44,6 +44,7 @@
       margin-bottom: 15px;
       resize: none;
       font-size: 14px;
+      box-sizing: border-box;
     }
 
     .templates {
@@ -61,6 +62,10 @@
       cursor: pointer;
       font-size: 12px;
       color: white;
+    }
+
+    .templates button:hover {
+      background: #475569;
     }
 
     .row {
@@ -87,6 +92,10 @@
       font-weight: bold;
     }
 
+    .main-btn:hover {
+      background: #2563eb;
+    }
+
     .output {
       margin-top: 15px;
       background: #020617;
@@ -94,6 +103,7 @@
       border-radius: 10px;
       white-space: pre-line;
       min-height: 70px;
+      line-height: 1.45;
     }
 
     .copy-btn {
@@ -105,6 +115,10 @@
       cursor: pointer;
       width: 100%;
       font-weight: bold;
+    }
+
+    .copy-btn:hover {
+      background: #16a34a;
     }
 
     .pro-btn {
@@ -128,74 +142,197 @@
 
 <div class="container">
 
-  <h1>Stop wasting hours answering buyers.</h1>
+  <h1 id="headline">Stop wasting hours answering buyers.</h1>
 
-  <div class="subtitle">
+  <div class="subtitle" id="subtitle">
     Copy → click → send. Answer any Vinted / Leboncoin message instantly.
   </div>
 
   <textarea id="message" placeholder="Paste buyer message here..."></textarea>
 
   <div class="templates">
-    <button onclick="setTemplate('delivery')">📦 Delivery delay</button>
-    <button onclick="setTemplate('refund')">💸 Refund</button>
-    <button onclick="setTemplate('price')">💰 Price negotiation</button>
-    <button onclick="setTemplate('available')">❓ Still available?</button>
-    <button onclick="setTemplate('refuse')">🚫 Refuse offer</button>
+    <button id="deliveryBtn" onclick="setTemplate('delivery')">📦 Delivery delay</button>
+    <button id="refundBtn" onclick="setTemplate('refund')">💸 Refund</button>
+    <button id="priceBtn" onclick="setTemplate('price')">💰 Price negotiation</button>
+    <button id="availableBtn" onclick="setTemplate('available')">❓ Still available?</button>
+    <button id="refuseBtn" onclick="setTemplate('refuse')">🚫 Refuse offer</button>
   </div>
 
   <div class="row">
-    <select id="tone">
-      <option value="balanced">Balanced</option>
-      <option value="friendly">Friendly</option>
-      <option value="formal">Professional</option>
-      <option value="firm">Firm</option>
+    <select id="language" onchange="updateUI()">
+      <option value="en">English</option>
+      <option value="fr">Français</option>
     </select>
 
-    <select id="length">
-      <option value="short">Short</option>
-      <option value="medium">Medium</option>
-      <option value="long">Long</option>
-    </select>
+    <select id="tone"></select>
+
+    <select id="length"></select>
   </div>
 
-  <button class="main-btn" onclick="generate()">Generate reply</button>
+  <button class="main-btn" id="generateBtn" onclick="generate()">Generate reply</button>
 
-  <div class="output" id="output"></div>
+  <div class="output" id="output">Your reply will appear here.</div>
 
-  <button class="copy-btn" onclick="copyText()">Copy reply</button>
+  <button class="copy-btn" id="copyBtn" onclick="copyText()">Copy reply</button>
 
-  <!-- 🔥 PRO BUTTON -->
-  <button class="pro-btn" onclick="unlockPro()">🔥 Unlock PRO</button>
+  <button class="pro-btn" id="proBtn" onclick="unlockPro()">🔥 Unlock PRO</button>
 
 </div>
 
 <script>
+const uiText = {
+  en: {
+    headline: "Stop wasting hours answering buyers.",
+    subtitle: "Copy → click → send. Answer any Vinted / Leboncoin message instantly.",
+    placeholder: "Paste buyer message here...",
+    generate: "Generate reply",
+    copy: "Copy reply",
+    pro: "🔥 Unlock PRO",
+    outputDefault: "Your reply will appear here.",
+    loading: "⏳ Generating...",
+    emptyAlert: "Write a message first.",
+    copiedAlert: "Copied!",
+    noCopyAlert: "No reply to copy.",
+    error: "Server error.",
+    proMessage: "Want unlimited replies?\n\nDM me on Instagram: @yourusername",
+    tones: [
+      ["balanced", "Balanced"],
+      ["friendly", "Friendly"],
+      ["formal", "Professional"],
+      ["firm", "Firm"]
+    ],
+    lengths: [
+      ["short", "Short"],
+      ["medium", "Medium"],
+      ["long", "Long"]
+    ],
+    buttons: {
+      delivery: "📦 Delivery delay",
+      refund: "💸 Refund",
+      price: "💰 Price negotiation",
+      available: "❓ Still available?",
+      refuse: "🚫 Refuse offer"
+    },
+    templates: {
+      delivery: "Hi, I still haven’t received my order. Can you check the delivery status?",
+      refund: "Hi, I would like a refund. What is the process?",
+      price: "Hi, would you accept a lower price?",
+      available: "Hi, is this item still available?",
+      refuse: "Hi, I can’t accept that offer, thank you."
+    }
+  },
+
+  fr: {
+    headline: "Arrête de perdre du temps à répondre aux acheteurs.",
+    subtitle: "Copie → clique → envoie. Réponds aux messages Vinted / Leboncoin instantanément.",
+    placeholder: "Colle ici le message de l’acheteur...",
+    generate: "Générer réponse",
+    copy: "Copier la réponse",
+    pro: "🔥 Débloquer PRO",
+    outputDefault: "Ta réponse apparaîtra ici.",
+    loading: "⏳ Génération en cours...",
+    emptyAlert: "Écris ou colle un message d’abord.",
+    copiedAlert: "Copié !",
+    noCopyAlert: "Aucune réponse à copier.",
+    error: "Erreur serveur.",
+    proMessage: "Tu veux des réponses illimitées ?\n\nEnvoie-moi un DM Instagram : @yourusername",
+    tones: [
+      ["balanced", "Équilibré"],
+      ["friendly", "Amical"],
+      ["formal", "Professionnel"],
+      ["firm", "Ferme"]
+    ],
+    lengths: [
+      ["short", "Court"],
+      ["medium", "Moyen"],
+      ["long", "Long"]
+    ],
+    buttons: {
+      delivery: "📦 Retard livraison",
+      refund: "💸 Remboursement",
+      price: "💰 Négociation prix",
+      available: "❓ Toujours dispo ?",
+      refuse: "🚫 Refus poli"
+    },
+    templates: {
+      delivery: "Bonjour, je n’ai toujours pas reçu ma commande. Pouvez-vous vérifier où en est la livraison ?",
+      refund: "Bonjour, je souhaite demander un remboursement. Quelle est la procédure ?",
+      price: "Bonjour, est-ce que vous acceptez un prix plus bas ?",
+      available: "Bonjour, l’article est-il toujours disponible ?",
+      refuse: "Bonjour, je ne peux pas accepter cette offre, merci."
+    }
+  }
+};
+
+function updateSelect(selectId, options) {
+  const select = document.getElementById(selectId);
+  const currentValue = select.value;
+
+  select.innerHTML = "";
+
+  options.forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    select.appendChild(option);
+  });
+
+  if (currentValue) {
+    select.value = currentValue;
+  }
+}
+
+function updateUI() {
+  const language = document.getElementById("language").value;
+  const t = uiText[language];
+
+  document.documentElement.lang = language;
+
+  document.getElementById("headline").innerText = t.headline;
+  document.getElementById("subtitle").innerText = t.subtitle;
+  document.getElementById("message").placeholder = t.placeholder;
+  document.getElementById("generateBtn").innerText = t.generate;
+  document.getElementById("copyBtn").innerText = t.copy;
+  document.getElementById("proBtn").innerText = t.pro;
+
+  document.getElementById("deliveryBtn").innerText = t.buttons.delivery;
+  document.getElementById("refundBtn").innerText = t.buttons.refund;
+  document.getElementById("priceBtn").innerText = t.buttons.price;
+  document.getElementById("availableBtn").innerText = t.buttons.available;
+  document.getElementById("refuseBtn").innerText = t.buttons.refuse;
+
+  updateSelect("tone", t.tones);
+  updateSelect("length", t.lengths);
+
+  const output = document.getElementById("output");
+  if (
+    output.innerText === uiText.en.outputDefault ||
+    output.innerText === uiText.fr.outputDefault
+  ) {
+    output.innerText = t.outputDefault;
+  }
+}
 
 function setTemplate(type) {
-  const templates = {
-    delivery: "Hi, I haven’t received my order yet. Can you check the delivery?",
-    refund: "Hi, I would like a refund. What is the process?",
-    price: "Hi, would you accept a lower price?",
-    available: "Hi, is this item still available?",
-    refuse: "Hi, I can’t accept that offer, thank you."
-  };
-
-  document.getElementById("message").value = templates[type];
+  const language = document.getElementById("language").value;
+  document.getElementById("message").value = uiText[language].templates[type];
   generate();
 }
 
 async function generate() {
-  const message = document.getElementById("message").value;
+  const language = document.getElementById("language").value;
+  const t = uiText[language];
+
+  const message = document.getElementById("message").value.trim();
   const tone = document.getElementById("tone").value;
   const length = document.getElementById("length").value;
 
   if (!message) {
-    alert("Write a message first");
+    alert(t.emptyAlert);
     return;
   }
 
-  document.getElementById("output").innerText = "⏳ Generating...";
+  document.getElementById("output").innerText = t.loading;
 
   try {
     const res = await fetch("/api/generate", {
@@ -205,7 +342,7 @@ async function generate() {
       },
       body: JSON.stringify({
         message,
-        language: "en",
+        language,
         tone,
         length
       })
@@ -213,24 +350,44 @@ async function generate() {
 
     const data = await res.json();
 
+    if (!res.ok) {
+      throw new Error(data.error || "API error");
+    }
+
     document.getElementById("output").innerText = data.text;
 
-  } catch {
-    document.getElementById("output").innerText =
-      "Server error.";
+  } catch (err) {
+    document.getElementById("output").innerText = t.error;
+    console.error(err);
   }
 }
 
 function copyText() {
+  const language = document.getElementById("language").value;
+  const t = uiText[language];
+
   const text = document.getElementById("output").innerText;
+
+  if (
+    !text ||
+    text === uiText.en.outputDefault ||
+    text === uiText.fr.outputDefault ||
+    text === t.loading
+  ) {
+    alert(t.noCopyAlert);
+    return;
+  }
+
   navigator.clipboard.writeText(text);
-  alert("Copied!");
+  alert(t.copiedAlert);
 }
 
 function unlockPro() {
-  alert("Want unlimited replies?\n\nDM me on Instagram: @yourusername");
+  const language = document.getElementById("language").value;
+  alert(uiText[language].proMessage);
 }
 
+updateUI();
 </script>
 
 </body>
