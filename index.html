@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>ReplyAI</title>
+  <title>SellerReply AI</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,8 +20,12 @@
       background: #1e293b;
       padding: 25px;
       border-radius: 12px;
-      width: 500px;
+      width: 520px;
       box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      margin-top: 0;
     }
 
     textarea {
@@ -32,6 +37,26 @@
       margin-bottom: 15px;
       resize: none;
       font-size: 14px;
+    }
+
+    .templates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .templates button {
+      background: #334155;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .templates button:hover {
+      background: #475569;
     }
 
     .row {
@@ -47,7 +72,7 @@
       border: none;
     }
 
-    button {
+    .main-btn {
       background: #3b82f6;
       border: none;
       padding: 10px;
@@ -55,9 +80,10 @@
       color: white;
       cursor: pointer;
       font-weight: bold;
+      width: 100%;
     }
 
-    button:hover {
+    .main-btn:hover {
       background: #2563eb;
     }
 
@@ -69,85 +95,134 @@
       white-space: pre-line;
     }
 
-    h2 {
-      margin-top: 0;
+    .copy-btn {
+      margin-top: 10px;
+      background: #22c55e;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: bold;
+    }
+
+    .copy-btn:hover {
+      background: #16a34a;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h2>ReplyAI</h2>
 
-    <textarea id="message" placeholder="Colle ton message ici..."></textarea>
+<div class="container">
 
-    <div class="row">
-      <select id="language">
-        <option value="fr">Français</option>
-        <option value="en">English</option>
-      </select>
+  <h2>SellerReply AI</h2>
+  <p style="font-size:12px;opacity:0.7;">
+    Réponds instantanément aux clients (Vinted, Leboncoin, Shopify…)
+  </p>
 
-      <select id="tone">
-        <option value="balanced">Équilibré</option>
-        <option value="friendly">Amical</option>
-        <option value="formal">Professionnel</option>
-        <option value="firm">Ferme</option>
-      </select>
+  <textarea id="message" placeholder="Colle ici le message du client..."></textarea>
 
-      <select id="length">
-        <option value="short">Court</option>
-        <option value="medium">Moyen</option>
-        <option value="long">Long</option>
-      </select>
-    </div>
-
-    <button onclick="generate()">Generate Replies</button>
-
-    <div class="output" id="output"></div>
+  <!-- 🔥 TEMPLATES -->
+  <div class="templates">
+    <button onclick="setTemplate('delivery')">📦 Retard livraison</button>
+    <button onclick="setTemplate('refund')">💸 Remboursement</button>
+    <button onclick="setTemplate('price')">💰 Négociation prix</button>
+    <button onclick="setTemplate('available')">❓ Toujours dispo ?</button>
+    <button onclick="setTemplate('refuse')">🚫 Refus poli</button>
   </div>
 
-  <script>
-    async function generate() {
-      const message = document.getElementById("message").value;
-      const language = document.getElementById("language").value;
-      const tone = document.getElementById("tone").value;
-      const length = document.getElementById("length").value;
+  <div class="row">
+    <select id="language">
+      <option value="fr">Français</option>
+      <option value="en">English</option>
+    </select>
 
-      if (!message) {
-        alert("Écris quelque chose");
-        return;
-      }
+    <select id="tone">
+      <option value="balanced">Équilibré</option>
+      <option value="friendly">Amical</option>
+      <option value="formal">Professionnel</option>
+      <option value="firm">Ferme</option>
+    </select>
 
-      document.getElementById("output").innerText = "Chargement...";
+    <select id="length">
+      <option value="short">Court</option>
+      <option value="medium">Moyen</option>
+      <option value="long">Long</option>
+    </select>
+  </div>
 
-      try {
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message,
-            language,
-            tone,
-            length
-          })
-        });
+  <button class="main-btn" onclick="generate()">Générer réponse</button>
 
-        const data = await res.json();
+  <div class="output" id="output"></div>
 
-        if (!res.ok) {
-          throw new Error(data.error || "Erreur API");
-        }
+  <button class="copy-btn" onclick="copyText()">📋 Copier la réponse</button>
 
-        document.getElementById("output").innerText = data.text;
+</div>
 
-      } catch (err) {
-        document.getElementById("output").innerText =
-          "Erreur de connexion au serveur.";
-        console.error(err);
-      }
+<script>
+
+function setTemplate(type) {
+  const templates = {
+    delivery: "Bonjour, je n’ai toujours pas reçu ma commande, pouvez-vous vérifier ?",
+    refund: "Bonjour, je souhaite un remboursement, merci de m’indiquer la procédure.",
+    price: "Bonjour, est-ce que vous acceptez un prix plus bas ?",
+    available: "Bonjour, l’article est-il toujours disponible ?",
+    refuse: "Bonjour, je ne peux pas accepter cette offre, merci de votre compréhension."
+  };
+
+  document.getElementById("message").value = templates[type];
+}
+
+async function generate() {
+  const message = document.getElementById("message").value;
+  const language = document.getElementById("language").value;
+  const tone = document.getElementById("tone").value;
+  const length = document.getElementById("length").value;
+
+  if (!message) {
+    alert("Écris quelque chose");
+    return;
+  }
+
+  document.getElementById("output").innerText = "Chargement...";
+
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message,
+        language,
+        tone,
+        length
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Erreur API");
     }
-  </script>
+
+    document.getElementById("output").innerText = data.text;
+
+  } catch (err) {
+    document.getElementById("output").innerText =
+      "Erreur de connexion au serveur.";
+    console.error(err);
+  }
+}
+
+function copyText() {
+  const text = document.getElementById("output").innerText;
+  navigator.clipboard.writeText(text);
+  alert("Copié !");
+}
+
+</script>
+
 </body>
 </html>
