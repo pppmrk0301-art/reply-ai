@@ -151,243 +151,113 @@
   <textarea id="message" placeholder="Paste buyer message here..."></textarea>
 
   <div class="templates">
-    <button id="deliveryBtn" onclick="setTemplate('delivery')">📦 Delivery delay</button>
-    <button id="refundBtn" onclick="setTemplate('refund')">💸 Refund</button>
-    <button id="priceBtn" onclick="setTemplate('price')">💰 Price negotiation</button>
-    <button id="availableBtn" onclick="setTemplate('available')">❓ Still available?</button>
-    <button id="refuseBtn" onclick="setTemplate('refuse')">🚫 Refuse offer</button>
+    <button onclick="setTemplate('delivery')">📦 Delivery delay</button>
+    <button onclick="setTemplate('refund')">💸 Refund</button>
+    <button onclick="setTemplate('price')">💰 Price negotiation</button>
+    <button onclick="setTemplate('available')">❓ Still available?</button>
+    <button onclick="setTemplate('refuse')">🚫 Refuse offer</button>
   </div>
 
   <div class="row">
-    <select id="language" onchange="updateUI()">
+    <select id="language">
       <option value="en">English</option>
       <option value="fr">Français</option>
     </select>
 
-    <select id="tone"></select>
+    <select id="tone">
+      <option value="balanced">Balanced</option>
+      <option value="friendly">Friendly</option>
+      <option value="formal">Professional</option>
+      <option value="firm">Firm</option>
+    </select>
 
-    <select id="length"></select>
+    <select id="length">
+      <option value="short">Short</option>
+      <option value="medium">Medium</option>
+      <option value="long">Long</option>
+    </select>
   </div>
 
-  <button class="main-btn" id="generateBtn" onclick="generate()">Generate reply</button>
+  <button class="main-btn" onclick="generate()">Generate reply</button>
 
   <div class="output" id="output">Your reply will appear here.</div>
 
-  <button class="copy-btn" id="copyBtn" onclick="copyText()">Copy reply</button>
+  <button class="copy-btn" onclick="copyText()">Copy reply</button>
 
-  <button class="pro-btn" id="proBtn" onclick="unlockPro()">🔥 Unlock PRO</button>
+  <button class="pro-btn" onclick="unlockPro()">🔥 Unlock PRO</button>
 
 </div>
 
 <script>
-const uiText = {
-  en: {
-    headline: "Stop wasting hours answering buyers.",
-    subtitle: "Copy → click → send. Answer any Vinted / Leboncoin message instantly.",
-    placeholder: "Paste buyer message here...",
-    generate: "Generate reply",
-    copy: "Copy reply",
-    pro: "🔥 Unlock PRO",
-    outputDefault: "Your reply will appear here.",
-    loading: "⏳ Generating...",
-    emptyAlert: "Write a message first.",
-    copiedAlert: "Copied!",
-    noCopyAlert: "No reply to copy.",
-    error: "Server error.",
-    proMessage: "Want unlimited replies?\n\nDM me on Instagram: @yourusername",
-    tones: [
-      ["balanced", "Balanced"],
-      ["friendly", "Friendly"],
-      ["formal", "Professional"],
-      ["firm", "Firm"]
-    ],
-    lengths: [
-      ["short", "Short"],
-      ["medium", "Medium"],
-      ["long", "Long"]
-    ],
-    buttons: {
-      delivery: "📦 Delivery delay",
-      refund: "💸 Refund",
-      price: "💰 Price negotiation",
-      available: "❓ Still available?",
-      refuse: "🚫 Refuse offer"
-    },
-    templates: {
-      delivery: "Hi, I still haven’t received my order. Can you check the delivery status?",
-      refund: "Hi, I would like a refund. What is the process?",
-      price: "Hi, would you accept a lower price?",
-      available: "Hi, is this item still available?",
-      refuse: "Hi, I can’t accept that offer, thank you."
-    }
-  },
 
-  fr: {
-    headline: "Arrête de perdre du temps à répondre aux acheteurs.",
-    subtitle: "Copie → clique → envoie. Réponds aux messages Vinted / Leboncoin instantanément.",
-    placeholder: "Colle ici le message de l’acheteur...",
-    generate: "Générer réponse",
-    copy: "Copier la réponse",
-    pro: "🔥 Débloquer PRO",
-    outputDefault: "Ta réponse apparaîtra ici.",
-    loading: "⏳ Génération en cours...",
-    emptyAlert: "Écris ou colle un message d’abord.",
-    copiedAlert: "Copié !",
-    noCopyAlert: "Aucune réponse à copier.",
-    error: "Erreur serveur.",
-    proMessage: "Tu veux des réponses illimitées ?\n\nEnvoie-moi un DM Instagram : @yourusername",
-    tones: [
-      ["balanced", "Équilibré"],
-      ["friendly", "Amical"],
-      ["formal", "Professionnel"],
-      ["firm", "Ferme"]
-    ],
-    lengths: [
-      ["short", "Court"],
-      ["medium", "Moyen"],
-      ["long", "Long"]
-    ],
-    buttons: {
-      delivery: "📦 Retard livraison",
-      refund: "💸 Remboursement",
-      price: "💰 Négociation prix",
-      available: "❓ Toujours dispo ?",
-      refuse: "🚫 Refus poli"
-    },
-    templates: {
-      delivery: "Bonjour, je n’ai toujours pas reçu ma commande. Pouvez-vous vérifier où en est la livraison ?",
-      refund: "Bonjour, je souhaite demander un remboursement. Quelle est la procédure ?",
-      price: "Bonjour, est-ce que vous acceptez un prix plus bas ?",
-      available: "Bonjour, l’article est-il toujours disponible ?",
-      refuse: "Bonjour, je ne peux pas accepter cette offre, merci."
-    }
+// 🔥 YOUR STRIPE LINK
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/4gM7sKblZ7j0ckO6cpcwg00";
+
+// Templates
+const templates = {
+  delivery: {
+    en: "Hi, I still haven’t received my order. Can you check the delivery status?",
+    fr: "Bonjour, je n’ai toujours pas reçu ma commande. Pouvez-vous vérifier la livraison ?"
+  },
+  refund: {
+    en: "Hi, I would like a refund. What is the process?",
+    fr: "Bonjour, je souhaite un remboursement. Quelle est la procédure ?"
+  },
+  price: {
+    en: "Hi, would you accept a lower price?",
+    fr: "Bonjour, acceptez-vous un prix plus bas ?"
+  },
+  available: {
+    en: "Hi, is this item still available?",
+    fr: "Bonjour, cet article est-il toujours disponible ?"
+  },
+  refuse: {
+    en: "Hi, I can’t accept that offer, thank you.",
+    fr: "Bonjour, je ne peux pas accepter cette offre, merci."
   }
 };
 
-function updateSelect(selectId, options) {
-  const select = document.getElementById(selectId);
-  const currentValue = select.value;
-
-  select.innerHTML = "";
-
-  options.forEach(([value, label]) => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    select.appendChild(option);
-  });
-
-  if (currentValue) {
-    select.value = currentValue;
-  }
-}
-
-function updateUI() {
-  const language = document.getElementById("language").value;
-  const t = uiText[language];
-
-  document.documentElement.lang = language;
-
-  document.getElementById("headline").innerText = t.headline;
-  document.getElementById("subtitle").innerText = t.subtitle;
-  document.getElementById("message").placeholder = t.placeholder;
-  document.getElementById("generateBtn").innerText = t.generate;
-  document.getElementById("copyBtn").innerText = t.copy;
-  document.getElementById("proBtn").innerText = t.pro;
-
-  document.getElementById("deliveryBtn").innerText = t.buttons.delivery;
-  document.getElementById("refundBtn").innerText = t.buttons.refund;
-  document.getElementById("priceBtn").innerText = t.buttons.price;
-  document.getElementById("availableBtn").innerText = t.buttons.available;
-  document.getElementById("refuseBtn").innerText = t.buttons.refuse;
-
-  updateSelect("tone", t.tones);
-  updateSelect("length", t.lengths);
-
-  const output = document.getElementById("output");
-  if (
-    output.innerText === uiText.en.outputDefault ||
-    output.innerText === uiText.fr.outputDefault
-  ) {
-    output.innerText = t.outputDefault;
-  }
-}
-
 function setTemplate(type) {
-  const language = document.getElementById("language").value;
-  document.getElementById("message").value = uiText[language].templates[type];
-  generate();
+  const lang = document.getElementById("language").value;
+  document.getElementById("message").value = templates[type][lang];
 }
 
 async function generate() {
-  const language = document.getElementById("language").value;
-  const t = uiText[language];
-
-  const message = document.getElementById("message").value.trim();
-  const tone = document.getElementById("tone").value;
-  const length = document.getElementById("length").value;
+  const message = document.getElementById("message").value;
 
   if (!message) {
-    alert(t.emptyAlert);
+    alert("Write something first");
     return;
   }
 
-  document.getElementById("output").innerText = t.loading;
+  document.getElementById("output").innerText = "⏳ Generating...";
 
   try {
     const res = await fetch("/api/generate", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message,
-        language,
-        tone,
-        length
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
     });
 
     const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "API error");
-    }
-
     document.getElementById("output").innerText = data.text;
 
-  } catch (err) {
-    document.getElementById("output").innerText = t.error;
-    console.error(err);
+  } catch {
+    document.getElementById("output").innerText = "Error";
   }
 }
 
 function copyText() {
-  const language = document.getElementById("language").value;
-  const t = uiText[language];
-
   const text = document.getElementById("output").innerText;
-
-  if (
-    !text ||
-    text === uiText.en.outputDefault ||
-    text === uiText.fr.outputDefault ||
-    text === t.loading
-  ) {
-    alert(t.noCopyAlert);
-    return;
-  }
-
   navigator.clipboard.writeText(text);
-  alert(t.copiedAlert);
+  alert("Copied!");
 }
 
+// 🔥 PAYMENT BUTTON (THIS IS THE IMPORTANT PART)
 function unlockPro() {
-  const language = document.getElementById("language").value;
-  alert(uiText[language].proMessage);
+  window.location.href = STRIPE_PAYMENT_LINK;
 }
 
-updateUI();
 </script>
 
 </body>
