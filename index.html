@@ -135,6 +135,24 @@
     .pro-btn:hover {
       background: #d97706;
     }
+
+    .usage {
+      margin-top: 12px;
+      font-size: 12px;
+      opacity: 0.75;
+      text-align: center;
+    }
+
+    .paywall {
+      margin-top: 15px;
+      background: #451a03;
+      border: 1px solid #f59e0b;
+      padding: 14px;
+      border-radius: 10px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 
@@ -142,9 +160,9 @@
 
 <div class="container">
 
-  <h1 id="headline">Stop wasting hours answering buyers.</h1>
+  <h1>Stop wasting hours answering buyers.</h1>
 
-  <div class="subtitle" id="subtitle">
+  <div class="subtitle">
     Copy → click → send. Answer any Vinted / Leboncoin message instantly.
   </div>
 
@@ -180,6 +198,12 @@
 
   <button class="main-btn" onclick="generate()">Generate reply</button>
 
+  <div class="usage" id="usageText"></div>
+
+  <div class="paywall" id="paywallBox">
+    Free limit reached. Upgrade to PRO for unlimited replies.
+  </div>
+
   <div class="output" id="output">Your reply will appear here.</div>
 
   <button class="copy-btn" onclick="copyText()">Copy reply</button>
@@ -189,11 +213,9 @@
 </div>
 
 <script>
-
-// 🔥 YOUR STRIPE LINK
 const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/4gM7sKblZ7j0ckO6cpcwg00";
+const FREE_LIMIT = 3;
 
-// Templates
 const templates = {
   delivery: {
     en: "Hi, I still haven’t received my order. Can you check the delivery status?",
@@ -217,16 +239,44 @@ const templates = {
   }
 };
 
+function getUsage() {
+  return Number(localStorage.getItem("sellerreply_usage") || 0);
+}
+
+function setUsage(value) {
+  localStorage.setItem("sellerreply_usage", value);
+}
+
+function updateUsageText() {
+  const usage = getUsage();
+  const remaining = Math.max(FREE_LIMIT - usage, 0);
+  document.getElementById("usageText").innerText =
+    `${remaining} free replies left`;
+}
+
+function showPaywall() {
+  document.getElementById("paywallBox").style.display = "block";
+  document.getElementById("output").innerText =
+    "Free limit reached. Upgrade to PRO to keep generating replies.";
+}
+
 function setTemplate(type) {
   const lang = document.getElementById("language").value;
   document.getElementById("message").value = templates[type][lang];
 }
 
 async function generate() {
-  const message = document.getElementById("message").value;
+  const message = document.getElementById("message").value.trim();
 
   if (!message) {
     alert("Write something first");
+    return;
+  }
+
+  const usage = getUsage();
+
+  if (usage >= FREE_LIMIT) {
+    showPaywall();
     return;
   }
 
@@ -236,10 +286,23 @@ async function generate() {
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({
+        message,
+        language: document.getElementById("language").value,
+        tone: document.getElementById("tone").value,
+        length: document.getElementById("length").value
+      })
     });
 
     const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "API error");
+    }
+
+    setUsage(usage + 1);
+    updateUsageText();
+
     document.getElementById("output").innerText = data.text;
 
   } catch {
@@ -249,15 +312,21 @@ async function generate() {
 
 function copyText() {
   const text = document.getElementById("output").innerText;
+
+  if (!text || text.includes("Free limit reached") || text === "Your reply will appear here.") {
+    alert("No reply to copy.");
+    return;
+  }
+
   navigator.clipboard.writeText(text);
   alert("Copied!");
 }
 
-// 🔥 PAYMENT BUTTON (THIS IS THE IMPORTANT PART)
 function unlockPro() {
   window.location.href = STRIPE_PAYMENT_LINK;
 }
 
+updateUsageText();
 </script>
 
 </body>
